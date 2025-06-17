@@ -10,7 +10,7 @@ const initRouter = require("./routes");
 // Connect to MongoDB
 mongoose
   .connect(
-    "mongodb://localhost:27017/Job_Potal"
+    "mongodb://localhost:27017/Job_Portal"
   )
   .then(() => console.log("Connected to DB"))
   .catch((err) => console.error(err));
