@@ -1,15 +1,11 @@
 const express = require("express");
 const jobCtrl = require("../controller/job");
-
-// Middleware for JWT authentication
 const jwtAuth = require("../middleware/jwtAuth");
 
-// Create a router object from Express
 const router = express.Router();
 
-// Get, post công việc, yêu cầu xác thực JWT
 router.post("/", jwtAuth, jobCtrl.addJob);
-router.get("/", jobCtrl.getJobList);
+router.get("/", jwtAuth, jobCtrl.getJobList); // ✅ FIXED LINE
 router.get("/:id", jobCtrl.getJobId);
 router.get("/:id/applications", jwtAuth, jobCtrl.getApplications);
 router.put("/:id", jwtAuth, jobCtrl.updateJobDetails);
