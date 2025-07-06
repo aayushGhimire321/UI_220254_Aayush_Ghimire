@@ -30,7 +30,7 @@ export default function Footer() {
               aghimire781@gmail.com
             </a>
             <span className="font-light">
-              Copyright © 2025 <span className="font-normal"> Nhat kha</span>{" "}
+              Copyright © 2025 <span className="font-normal"> Aayush</span>{" "}
               Design.
             </span>
           </div>
@@ -141,7 +141,7 @@ export default function Footer() {
             </a>
             <a
               className="w-28 opacity-80 hover:opacity-100 font-semibold text-lg"
-              href="https://github.com/aayushGhimire321"
+              href="https://github.com/aayushghimire321"
               target="_blank"
               rel="noreferrer"
             >

@@ -41,25 +41,18 @@ export default function JobCreator({ jobToEdit }) {
     });
   };
 
-  useEffect(() => {
-    setJob((prevJob) => ({
-      ...prevJob,
-      skillsets: tags,
-    }));
-  }, [tags]);
-
   const [job, setJob] = useState(
     jobToEdit || {
       name: isAuth(),
       title: "",
       maxApplicants: "",
       maxPositions: "",
-      salary: "",
+      salary: 0,
       deadline: new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000)
         .toISOString()
         .substr(0, 16),
       skillsets: [],
-      duration: "",
+      duration: 0,
       jobType: "Full Time",
       location: "",
       status: "Open",
@@ -67,14 +60,21 @@ export default function JobCreator({ jobToEdit }) {
     }
   );
 
+  useEffect(() => {
+    setJob((prevJob) => ({
+      ...prevJob,
+      skillsets: tags,
+    }));
+  }, [tags]);
+
   const isComplete =
     job.title.trim().length > 0 &&
-    Number(job.maxApplicants) > 0 &&
-    Number(job.maxPositions) > 0 &&
-    Number(job.salary) > 0 &&
-    job.deadline.length > 0 &&
+    job.maxApplicants !== "" &&
+    job.maxPositions !== "" &&
+    job.salary !== "" &&
+    job.duration !== "" &&
+    job.deadline.trim().length > 0 &&
     job.skillsets.length > 0 &&
-    Number(job.duration) > 0 &&
     job.jobType.trim().length > 0 &&
     job.location.trim().length > 0 &&
     job.description.trim().length > 0;
@@ -90,7 +90,8 @@ export default function JobCreator({ jobToEdit }) {
   };
 
   const handleUpdate = () => {
-    console.log("Submitting job:", job);
+    console.log("Sending job:", job);
+
     axios
       .post(apiList.jobs, job, {
         headers: {
@@ -98,37 +99,44 @@ export default function JobCreator({ jobToEdit }) {
         },
       })
       .then((response) => {
-        console.log("Job created:", response.data);
+        console.log("Job posted successfully:", response.data);
+
         setJob({
-          name: isAuth(),
           title: "",
           maxApplicants: "",
           maxPositions: "",
-          salary: "",
           deadline: new Date(new Date().getTime() + 10 * 24 * 60 * 60 * 1000)
             .toISOString()
             .substr(0, 16),
           skillsets: [],
+          jobType: "",
           duration: "",
-          jobType: "Full Time",
-          location: "",
-          status: "Open",
+          salary: "",
           description: "",
+          location: "",
         });
-        setTags([]);
-        setPopup({
-          open: true,
-          icon: "success",
-          message: "Post created successfully",
-        });
+
+        if (typeof setPopup === "function") {
+          setPopup({
+            open: true,
+            icon: "success",
+            message: "Post created successfully",
+          });
+        } else {
+          alert("Post created successfully");
+        }
       })
       .catch((err) => {
-        console.log("Error submitting job:", err?.response || err);
-        setPopup({
-          open: true,
-          icon: "error",
-          message: "Something went wrong. Please try again.",
-        });
+        console.error("Error posting job:", err?.response?.data || err.message);
+        if (typeof setPopup === "function") {
+          setPopup({
+            open: true,
+            icon: "error",
+            message: "Failed to post job",
+          });
+        } else {
+          alert("Failed to post job");
+        }
       });
   };
 
@@ -140,92 +148,114 @@ export default function JobCreator({ jobToEdit }) {
           type="text"
           label="Job Title"
           value={job.title}
-          onChange={(e) => setJob({ ...job, title: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, title: e.target.value });
+          }}
           placeholder="Title"
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="number"
           label="Salary Reward"
-          placeholder="e.g. 25000"
+          placeholder="..."
           value={job.salary}
-          onChange={(e) => setJob({ ...job, salary: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, salary: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="text"
           label="Job Type"
-          placeholder="Full Time / Part Time"
+          placeholder="Full Time"
           value={job.jobType}
-          onChange={(e) => setJob({ ...job, jobType: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, jobType: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
-          type="number"
-          label="Duration (in months)"
-          placeholder="e.g. 6"
+          className="mt-8 hover:border-black"
+          type="text"
+          label="Duration"
+          placeholder="e.g. 3 months"
           value={job.duration}
-          onChange={(e) => setJob({ ...job, duration: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, duration: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="datetime-local"
           label="Application Deadline"
           value={job.deadline}
-          onChange={(e) => setJob({ ...job, deadline: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, deadline: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="number"
           label="Maximum Number Of Applicants"
-          placeholder="e.g. 100"
+          placeholder="100"
           value={job.maxApplicants}
-          onChange={(e) => setJob({ ...job, maxApplicants: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, maxApplicants: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="text"
           label="Location"
-          placeholder="City, Country"
+          placeholder="Location"
           value={job.location}
-          onChange={(e) => setJob({ ...job, location: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, location: e.target.value });
+          }}
         />
         <InputField
-          className="mt-8"
+          className="mt-8 hover:border-black"
           type="number"
           label="Positions Available"
-          placeholder="e.g. 5"
+          placeholder="20"
           value={job.maxPositions}
-          onChange={(e) => setJob({ ...job, maxPositions: e.target.value })}
+          onChange={(e) => {
+            setJob({ ...job, maxPositions: e.target.value });
+          }}
         />
+
         <div className="pb-4">
           <label className="block text-black text-sm font-semibold mb-2">
             Skills <span className="text-[#ff3131]">*</span>
           </label>
           <MuiChipsInput
             value={tags}
-            onChange={addTag}
+            onChange={(e) => addTag(e)}
             className="bg-white w-full block border border-grey-light p-3 rounded mb-4"
-            onDeleteChip={handleDeleteTag}
+            onDeleteChip={(deletedTag) => handleDeleteTag(deletedTag)}
           />
         </div>
+
         <label className="block text-sm font-medium text-gray-700 mt-6 mb-2">
           Job Description
         </label>
-        <div>
+        <tr>
           <ReactQuill
             modules={modules}
             theme="snow"
             value={job.description}
-            onChange={(e) => setJob({ ...job, description: e })}
+            onChange={(e) => {
+              setJob({ ...job, description: e });
+            }}
             placeholder="Job description goes here..."
           />
-        </div>
+        </tr>
+
         <div className="flex items-center pt-6">
           {isComplete ? (
             <button
               onClick={handleUpdate}
-              className="text-center transform hover:-translate-y-1 hover:shadow-lg cursor-pointer font-bold text-md px-8 py-3 bg-primary rounded-xl text-black"
+              className="text-center transform hover:-translate-y-1 hover:shadow-lg 
+                cursor-pointer font-bold text-md px-8 py-3 bg-primary rounded-xl text-black"
             >
               Save
             </button>
@@ -240,6 +270,7 @@ export default function JobCreator({ jobToEdit }) {
           </Link>
         </div>
       </div>
+
       <div className="col-span-8 overflow-y-scroll">
         <JobAd job={job} tags={tags} />
       </div>

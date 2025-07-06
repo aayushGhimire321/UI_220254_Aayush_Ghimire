@@ -14,25 +14,9 @@ export default function Recruiter() {
   const [selectedPage, setSelectedPage] = useState(1);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setPopup({
-        open: true,
-        icon: "error",
-        message: "You must be logged in to view this page.",
-      });
-      return;
-    }
-
     const user = apiList.allRecruiter;
-
     axios
-      .get(user, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      .get(user)
       .then((response) => {
         console.log(response.data.allUser);
         setAll(response.data.allUser);
@@ -42,8 +26,7 @@ export default function Recruiter() {
         setPopup({
           open: true,
           icon: "error",
-          message:
-            err.response?.data?.message || "Unauthorized or session expired.",
+          message: "Error",
         });
       });
   }, []);
@@ -78,7 +61,7 @@ export default function Recruiter() {
                 <Typography variant="h5">{recruiter.name}</Typography>
               </div>
               <div>
-                bio:{" "}
+                bio :{" "}
                 <span className="font-semibold whitespace-pre-wrap">
                   {recruiter.bio}
                 </span>
@@ -98,10 +81,10 @@ export default function Recruiter() {
               <button
                 key={i}
                 onClick={() => paginate(i + 1)}
-                className={`mx-1 px-3 py-1 text-black border rounded ${
-                  selectedPage === i + 1
-                    ? "bg-yellow-200 border-yellow-300"
-                    : "bg-white hover:border-yellow-300"
+                className={`mx-1 px-3 py-1 bg-${
+                  selectedPage === i + 1 ? "yellow" : "white"
+                } text-black border hover:border-yellow-300 rounded ${
+                  selectedPage === i + 1 ? "bg-yellow-200" : ""
                 }`}
               >
                 {i + 1}
