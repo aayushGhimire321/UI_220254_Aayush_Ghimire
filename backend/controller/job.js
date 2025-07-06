@@ -55,12 +55,12 @@ const getJobList = async (req, res) => {
   let sortParams = {};
 
   // Filter jobs for recruiters if 'myjobs' query parameter is present
-  if (user.type === "recruiter" && req.query.myjobs) {
-    findParams = {
-      ...findParams,
-      userId: user._id,
-    };
-  }
+  // if (user.type === "recruiter" && req.query.myjobs) {
+  //   findParams = {
+  //     ...findParams,
+  //     userId: user._id,
+  //   };
+  // }
 
   // Filter jobs based on title using 'q' query parameter
   if (req.query.q) {
