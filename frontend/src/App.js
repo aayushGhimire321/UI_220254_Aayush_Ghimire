@@ -40,6 +40,7 @@ export const SetPopupContext = createContext();
 
 export default function App() {
   const type = userType();
+  console.log("type: " + type);
   const [popup, setPopup] = useState({
     open: false,
     icon: "",
@@ -48,8 +49,7 @@ export default function App() {
 
   useEffect(() => {
     if (popup.open) {
-      const toastType = toast[popup.icon] || toast.info;
-      toastType(popup.message, {
+      toast[popup.icon](popup.message, {
         position: "top-right",
         autoClose: 2000,
         hideProgressBar: false,
@@ -59,13 +59,12 @@ export default function App() {
         transition: Slide,
       });
 
-      // Close popup only once after showing
-      setPopup((prev) => ({
-        ...prev,
+      setPopup({
+        ...popup,
         open: false,
-      }));
+      });
     }
-  }, [popup.open]); // Only depend on popup.open
+  }, [popup.open, popup.icon, popup.message, popup]);
 
   return (
     <SetPopupContext.Provider value={setPopup}>
@@ -131,6 +130,7 @@ export default function App() {
             element={<TalentPool />}
             type={type}
           />
+
           <Route exact path="/applicant/settings" element={<Settings />} />
           <Route exact path="/admin/settings" element={<AdminSettings />} />
           <Route exact path="/logout" element={<Logout />} />

@@ -2,6 +2,7 @@ import InputField from "components/InputField";
 import JobAd from "components/JobAd";
 import ReactQuill from "react-quill";
 import { useContext, useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import "react-quill/dist/quill.snow.css";
@@ -30,16 +31,26 @@ export default function JobCreator({ jobToEdit }) {
 
   const addTag = (e) => {
     const newTags = e;
+
     setTags((prevTags) => {
       const updatedTags = [...prevTags];
+
       newTags.forEach((newTag) => {
         if (!updatedTags.some((tag) => tag[0] === newTag[0])) {
           updatedTags.push(newTag);
         }
       });
+
       return updatedTags;
     });
   };
+
+  useEffect(() => {
+    setJob((prevJob) => ({
+      ...prevJob,
+      skillsets: tags,
+    }));
+  }, [tags]);
 
   const [job, setJob] = useState(
     jobToEdit || {
@@ -60,24 +71,17 @@ export default function JobCreator({ jobToEdit }) {
     }
   );
 
-  useEffect(() => {
-    setJob((prevJob) => ({
-      ...prevJob,
-      skillsets: tags,
-    }));
-  }, [tags]);
-
-  const isComplete =
-    job.title.trim().length > 0 &&
-    job.maxApplicants !== "" &&
-    job.maxPositions !== "" &&
-    job.salary !== "" &&
-    job.duration !== "" &&
-    job.deadline.trim().length > 0 &&
+  let isComplete =
+    job.title.length > 0 &&
+    job.maxApplicants.length > 0 &&
+    job.maxPositions.length > 0 &&
+    job.salary.length > 0 &&
+    job.deadline.length > 0 &&
     job.skillsets.length > 0 &&
-    job.jobType.trim().length > 0 &&
-    job.location.trim().length > 0 &&
-    job.description.trim().length > 0;
+    job.duration.length > 0 &&
+    job.jobType.length > 0 &&
+    job.location.length > 0 &&
+    job.description.length > 0;
 
   const modules = {
     toolbar: [
@@ -90,8 +94,7 @@ export default function JobCreator({ jobToEdit }) {
   };
 
   const handleUpdate = () => {
-    console.log("Sending job:", job);
-
+    console.log(job);
     axios
       .post(apiList.jobs, job, {
         headers: {
@@ -99,8 +102,6 @@ export default function JobCreator({ jobToEdit }) {
         },
       })
       .then((response) => {
-        console.log("Job posted successfully:", response.data);
-
         setJob({
           title: "",
           maxApplicants: "",
@@ -115,28 +116,14 @@ export default function JobCreator({ jobToEdit }) {
           description: "",
           location: "",
         });
-
-        if (typeof setPopup === "function") {
-          setPopup({
-            open: true,
-            icon: "success",
-            message: "Post created successfully",
-          });
-        } else {
-          alert("Post created successfully");
-        }
+        setPopup({
+          open: true,
+          icon: "success",
+          message: "Post created successfully",
+        });
       })
       .catch((err) => {
-        console.error("Error posting job:", err?.response?.data || err.message);
-        if (typeof setPopup === "function") {
-          setPopup({
-            open: true,
-            icon: "error",
-            message: "Failed to post job",
-          });
-        } else {
-          alert("Failed to post job");
-        }
+        console.log(err.response);
       });
   };
 
@@ -149,47 +136,63 @@ export default function JobCreator({ jobToEdit }) {
           label="Job Title"
           value={job.title}
           onChange={(e) => {
-            setJob({ ...job, title: e.target.value });
+            setJob({
+              ...job,
+              title: e.target.value,
+            });
           }}
           placeholder="Title"
         />
         <InputField
           className="mt-8 hover:border-black"
           type="number"
-          label="Salary Reward"
+          label="salary Reward"
           placeholder="..."
           value={job.salary}
           onChange={(e) => {
-            setJob({ ...job, salary: e.target.value });
+            setJob({
+              ...job,
+              salary: e.target.value,
+            });
           }}
         />
         <InputField
           className="mt-8 hover:border-black"
           type="text"
-          label="Job Type"
-          placeholder="Full Time"
+          label="Job type"
+          placeholder="25 000"
           value={job.jobType}
           onChange={(e) => {
-            setJob({ ...job, jobType: e.target.value });
+            setJob({
+              ...job,
+              jobType: e.target.value,
+            });
           }}
         />
         <InputField
           className="mt-8 hover:border-black"
           type="text"
-          label="Duration"
-          placeholder="e.g. 3 months"
+          label="duration"
+          placeholder="25 000"
           value={job.duration}
           onChange={(e) => {
-            setJob({ ...job, duration: e.target.value });
+            setJob({
+              ...job,
+              duration: e.target.value,
+            });
           }}
         />
         <InputField
           className="mt-8 hover:border-black"
           type="datetime-local"
           label="Application Deadline"
+          placeholder="dd/mm/yy"
           value={job.deadline}
           onChange={(e) => {
-            setJob({ ...job, deadline: e.target.value });
+            setJob({
+              ...job,
+              deadline: e.target.value,
+            });
           }}
         />
         <InputField
@@ -199,17 +202,23 @@ export default function JobCreator({ jobToEdit }) {
           placeholder="100"
           value={job.maxApplicants}
           onChange={(e) => {
-            setJob({ ...job, maxApplicants: e.target.value });
+            setJob({
+              ...job,
+              maxApplicants: e.target.value,
+            });
           }}
         />
         <InputField
           className="mt-8 hover:border-black"
           type="text"
-          label="Location"
-          placeholder="Location"
+          label="location"
+          placeholder="25 000"
           value={job.location}
           onChange={(e) => {
-            setJob({ ...job, location: e.target.value });
+            setJob({
+              ...job,
+              location: e.target.value,
+            });
           }}
         />
         <InputField
@@ -219,24 +228,27 @@ export default function JobCreator({ jobToEdit }) {
           placeholder="20"
           value={job.maxPositions}
           onChange={(e) => {
-            setJob({ ...job, maxPositions: e.target.value });
+            setJob({
+              ...job,
+              maxPositions: e.target.value,
+            });
           }}
         />
-
         <div className="pb-4">
           <label className="block text-black text-sm font-semibold mb-2">
             Skills <span className="text-[#ff3131]">*</span>
           </label>
           <MuiChipsInput
             value={tags}
-            onChange={(e) => addTag(e)}
+            onChange={(e) => {
+              addTag(e);
+            }}
             className="bg-white w-full block border border-grey-light p-3 rounded mb-4"
             onDeleteChip={(deletedTag) => handleDeleteTag(deletedTag)}
           />
         </div>
-
         <label className="block text-sm font-medium text-gray-700 mt-6 mb-2">
-          Job Description
+          Job description
         </label>
         <tr>
           <ReactQuill
@@ -244,18 +256,20 @@ export default function JobCreator({ jobToEdit }) {
             theme="snow"
             value={job.description}
             onChange={(e) => {
-              setJob({ ...job, description: e });
+              setJob({
+                ...job,
+                description: e,
+              });
             }}
             placeholder="Job description goes here..."
           />
         </tr>
-
         <div className="flex items-center pt-6">
           {isComplete ? (
             <button
-              onClick={handleUpdate}
+              onClick={() => handleUpdate()}
               className="text-center transform hover:-translate-y-1 hover:shadow-lg 
-                cursor-pointer font-bold text-md px-8 py-3 bg-primary rounded-xl text-black"
+              cursor-pointer font-bold text-md px-8 py-3 bg-primary rounded-xl text-black"
             >
               Save
             </button>
@@ -270,7 +284,6 @@ export default function JobCreator({ jobToEdit }) {
           </Link>
         </div>
       </div>
-
       <div className="col-span-8 overflow-y-scroll">
         <JobAd job={job} tags={tags} />
       </div>

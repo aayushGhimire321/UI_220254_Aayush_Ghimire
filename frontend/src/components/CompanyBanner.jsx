@@ -20,9 +20,9 @@ export function CompanyBanner() {
               </h1>
 
               <p className="text-xl text-black">
-                Anyone can refer a friend on Job Portal. But if you are serious about
-                helping your friends, you should sign up for a Job Portal account.
-                A Job Portal account let's you track the progress of your referrals
+                Anyone can refer a friend on Greet. But if you are serious about
+                helping your friends, you should sign up for a Greeter account.
+                A Greeter account let's you track the progress of your referrals
                 and makes it faster to fill in a referral.
               </p>
 
