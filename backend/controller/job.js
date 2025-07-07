@@ -1,194 +1,118 @@
+/* controllers/job.js */
 const Job = require("../model/job");
 const Application = require("../model/applications");
 
-// Function to add a new job
+/* ─────────────────────────────────────────────
+   ─────────────  HELPERS  ──────────────────────
+   ───────────────────────────────────────────── */
+const toNum = (v) => (v === "" || v === undefined ? undefined : Number(v));
+
+const sendError = (res, code, message) =>
+  res.status(code).json({ message });
+
+/* ─────────────────────────────────────────────
+   ─────────────  ADD JOB  ─────────────────────
+   ───────────────────────────────────────────── */
 const addJob = async (req, res) => {
-  const user = req.user;
+  try {
+    const user = req.user;
+    if (!user || user.type !== "recruiter") {
+      return sendError(res, 401, "You don't have permissions to add jobs");
+    }
 
-  // Check if the user is a recruiter
-  if (user.type !== "recruiter") {
-    res.status(401).json({
-      message: "You don't have permissions to add jobs",
+    const {
+      title,
+      maxApplicants,
+      maxPositions,
+      deadline,
+      skillsets,
+      jobType,
+      duration,
+      salary,
+      description,
+      location,
+    } = req.body;
+
+    /* Basic validation (you can extend / tighten this) */
+    if (
+      !title ||
+      !deadline ||
+      !Array.isArray(skillsets) ||
+      skillsets.length === 0
+    ) {
+      return sendError(res, 400, "Missing required fields");
+    }
+
+    /* Build job doc */
+    const job = new Job({
+      userId: user._id,
+      profile: user.profile,
+      title: title.trim(),
+      maxApplicants: toNum(maxApplicants),
+      maxPositions: toNum(maxPositions),
+      dateOfPosting: new Date(), // server‑side timestamp
+      deadline,
+      skillsets: skillsets.map((s) => s.toString()), // force string array
+      jobType,
+      duration: toNum(duration),
+      salary: toNum(salary),
+      rating: 0,
+      description,
+      location,
     });
-    return;
+
+    await job.save();
+    return res.json({ message: "Job added successfully to the database" });
+  } catch (err) {
+    console.error("addJob error →", err); // full stack for dev
+    return sendError(res, 400, err.message || "Failed to add job");
   }
-
-  // Extract job data from the request body
-  const data = req.body;
-
-  // Create a new job instance
-  let job = new Job({
-    userId: user._id,
-    profile: user.profile,
-    title: data.title,
-    maxApplicants: data.maxApplicants,
-    maxPositions: data.maxPositions,
-    dateOfPosting: data.dateOfPosting,
-    deadline: data.deadline,
-    skillsets: data.skillsets,
-    jobType: data.jobType,
-    duration: data.duration,
-    salary: data.salary,
-    rating: data.rating,
-    description: data.description,
-    location: data.location,
-  });
-  console.log(data);
-
-  // Save the job to the database
-  job
-    .save()
-    .then(() => {
-      res.json({ message: "Job added successfully to the database" });
-    })
-    .catch((err) => {
-      res.status(400).json(err.message);
-    });
 };
 
-// Function to get list job
+/* ─────────────────────────────────────────────
+   ─────────────  GET JOB LIST  ────────────────
+   ───────────────────────────────────────────── */
 const getJobList = async (req, res) => {
-  let user = req.user;
+  try {
+    const findParams = {};
+    const sortParams = {};
 
-  // Define filters and sorting parameters based on query parameters
-  let findParams = {};
-  let sortParams = {};
-
-  // Filter jobs for recruiters if 'myjobs' query parameter is present
-  // if (user.type === "recruiter" && req.query.myjobs) {
-  //   findParams = {
-  //     ...findParams,
-  //     userId: user._id,
-  //   };
-  // }
-
-  // Filter jobs based on title using 'q' query parameter
-  if (req.query.q) {
-    findParams = {
-      ...findParams,
-      title: {
-        $regex: new RegExp(req.query.q, "i"),
-      },
-    };
-  }
-
-  // Filter jobs based on job type using 'jobType' query parameter
-  if (req.query.jobType) {
-    let jobTypes = [];
-    if (Array.isArray(req.query.jobType)) {
-      jobTypes = req.query.jobType;
-    } else {
-      jobTypes = [req.query.jobType];
-    }
-    console.log(jobTypes);
-    findParams = {
-      ...findParams,
-      jobType: {
-        $in: jobTypes,
-      },
-    };
-  }
-
-  // Filter jobs based on salary range using 'salaryMin' and 'salaryMax' query parameters
-  if (req.query.salaryMin && req.query.salaryMax) {
-    findParams = {
-      ...findParams,
-      $and: [
-        {
-          salary: {
-            $gte: parseInt(req.query.salaryMin),
-          },
-        },
-        {
-          salary: {
-            $lte: parseInt(req.query.salaryMax),
-          },
-        },
-      ],
-    };
-  } else if (req.query.salaryMin) {
-    findParams = {
-      ...findParams,
-      salary: {
-        $gte: parseInt(req.query.salaryMin),
-      },
-    };
-  } else if (req.query.salaryMax) {
-    findParams = {
-      ...findParams,
-      salary: {
-        $lte: parseInt(req.query.salaryMax),
-      },
-    };
-  }
-
-  // Filter jobs based on duration using 'duration' query parameter
-  if (req.query.duration) {
-    findParams = {
-      ...findParams,
-      duration: {
-        $lt: parseInt(req.query.duration),
-      },
-    };
-  }
-
-  // Define sorting parameters based on 'asc' and 'desc' query parameters
-  if (req.query.asc) {
-    if (Array.isArray(req.query.asc)) {
-      req.query.asc.map((key) => {
-        sortParams = {
-          ...sortParams,
-          [key]: 1,
-        };
-      });
-    } else {
-      sortParams = {
-        ...sortParams,
-        [req.query.asc]: 1,
-      };
+    if (req.query.q) {
+      findParams.title = { $regex: new RegExp(req.query.q, "i") };
     }
 
-    // sortParams = parseSortParameters(req.query.asc, 1);
-  }
-
-  if (req.query.desc) {
-    if (Array.isArray(req.query.desc)) {
-      req.query.desc.map((key) => {
-        sortParams = {
-          ...sortParams,
-          [key]: -1,
-        };
-      });
-    } else {
-      sortParams = {
-        ...sortParams,
-        [req.query.desc]: -1,
-      };
+    if (req.query.jobType) {
+      const types = Array.isArray(req.query.jobType)
+        ? req.query.jobType
+        : [req.query.jobType];
+      findParams.jobType = { $in: types };
     }
 
-    // sortParams = parseSortParameters(req.query.desc, 1);
-  }
+    if (req.query.salaryMin || req.query.salaryMax) {
+      findParams.salary = {};
+      if (req.query.salaryMin) findParams.salary.$gte = Number(req.query.salaryMin);
+      if (req.query.salaryMax) findParams.salary.$lte = Number(req.query.salaryMax);
+    }
 
-  console.log(findParams);
-  console.log(sortParams);
+    if (req.query.duration) {
+      findParams.duration = { $lt: Number(req.query.duration) };
+    }
 
-  // Aggregate pipeline for querying jobs
-  let arr = [
-    {
-      $lookup: {
-        from: "recruiterinfos",
-        localField: "userId",
-        foreignField: "userId",
-        as: "recruiter",
-      },
-    },
-    { $unwind: "$recruiter" },
-    { $match: findParams },
-  ];
+    const addSort = (field, dir) =>
+      (sortParams[field] = dir);
 
-  // Add sorting stage to the pipeline if sorting parameters are present
-  if (Object.keys(sortParams).length > 0) {
-    arr = [
+    if (req.query.asc) {
+      (Array.isArray(req.query.asc) ? req.query.asc : [req.query.asc]).forEach((f) =>
+        addSort(f, 1)
+      );
+    }
+    if (req.query.desc) {
+      (Array.isArray(req.query.desc) ? req.query.desc : [req.query.desc]).forEach((f) =>
+        addSort(f, -1)
+      );
+    }
+
+    const pipeline = [
       {
         $lookup: {
           from: "recruiterinfos",
@@ -199,363 +123,197 @@ const getJobList = async (req, res) => {
       },
       { $unwind: "$recruiter" },
       { $match: findParams },
-      {
-        $sort: sortParams,
-      },
     ];
+    if (Object.keys(sortParams).length) pipeline.push({ $sort: sortParams });
+
+    const jobs = await Job.aggregate(pipeline);
+    if (!jobs.length) {
+      return sendError(res, 404, "No job found");
+    }
+    return res.json(jobs);
+  } catch (err) {
+    console.error("getJobList error →", err);
+    return sendError(res, 400, err.message || "Failed to fetch jobs");
   }
-
-  console.log(arr);
-
-  // Execute the aggregation query
-  Job.aggregate(arr)
-    .then((posts) => {
-      if (posts == null) {
-        res.status(404).json({
-          message: "No job found",
-        });
-        return;
-      }
-      res.json(posts);
-    })
-    .catch((err) => {
-      res.status(400).json(err);
-    });
 };
 
-// Function to get details of a specific job by ID
+/* ─────────────────────────────────────────────
+   ─────────────  GET JOB BY ID  ───────────────
+   ───────────────────────────────────────────── */
 const getJobId = async (req, res) => {
-  Job.findOne({ _id: req.params.id })
-    .then((job) => {
-      if (job == null) {
-        res.status(400).json({
-          message: "Job does not exist",
-        });
-        return;
-      }
-      res.json(job);
-    })
-    .catch((err) => {
-      res.status(400).json({
-        message: "Error fetching job",
-        error: err.message, // Include the error message for debugging
-      });
-      1;
-      console.log("error: ", err);
-    });
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return sendError(res, 404, "Job does not exist");
+    return res.json(job);
+  } catch (err) {
+    console.error("getJobId error →", err);
+    return sendError(res, 400, "Error fetching job");
+  }
 };
 
-// Function to update details of a specific job by ID
+/* ─────────────────────────────────────────────
+   ─────────────  UPDATE JOB  ──────────────────
+   ───────────────────────────────────────────── */
 const updateJobDetails = async (req, res) => {
-  const user = req.user;
-
-  // Check if the user is a recruiter
-  if (user.type !== "recruiter") {
-    res.status(401).json({
-      message: "You don't have permissions to change the job details",
-    });
-    return;
-  }
-
-  const jobId = req.params.id;
-  const updateData = req.body;
-
-  if (!updateData) {
-    res.status(400).json({ message: "No data provided for update" });
-    return;
-  }
-
   try {
-    // Find the job by ID and user ID, and update it
-    const updatedJob = await Job.findByIdAndUpdate(
-      {
-        _id: jobId,
-        userId: user.id,
-      },
-      updateData
-      // { new: true, runValidators: true }
+    const user = req.user;
+    if (!user || user.type !== "recruiter") {
+      return sendError(res, 401, "You don't have permissions");
+    }
+
+    const updated = await Job.findOneAndUpdate(
+      { _id: req.params.id, userId: user._id },
+      req.body,
+      { new: true, runValidators: true }
     );
 
-    if (!updatedJob) {
-      res.status(404).json({
-        message: "Job does not exist",
-      });
-      return;
-    }
+    if (!updated) return sendError(res, 404, "Job does not exist");
 
-    res.json({
-      message: "Job details updated successfully",
-      updatedJob,
-    });
+    return res.json({ message: "Job details updated", updatedJob: updated });
   } catch (err) {
-    res.status(400).json(err);
+    console.error("updateJobDetails error →", err);
+    return sendError(res, 400, err.message || "Failed to update job");
   }
 };
 
-// Function to allow an applicant to apply for a job
+/* ─────────────────────────────────────────────
+   ─────────────  APPLY FOR JOB  ───────────────
+   ───────────────────────────────────────────── */
 const applyJob = async (req, res) => {
-  const user = req.user;
-
-  // Check if the user is an applicant
-  if (user.type != "applicant") {
-    res.status(401).json({
-      message: "You don't have permissions to apply for a job",
-    });
-    return;
-  }
-
-  Application.findOne({
-    userId: user._id,
-    status: {
-      $nin: ["accepted", "finished"],
-    },
-  })
-    .then((acceptedJob) => {
-      if (
-        (acceptedJob !== null && acceptedJob.status === "finished") ||
-        (acceptedJob !== null && acceptedJob.status === "accepted")
-      ) {
-        res.status(400).json({
-          message:
-            "You already have an accepted job. Hence you cannot apply for a new one.",
-        });
-        return;
-      }
-      const data = req.body;
-      const jobId = req.params.id;
-
-      // Check if the user has already applied for the job
-      Application.findOne({
-        userId: user._id,
-        jobId: jobId,
-        status: {
-          $nin: ["deleted", "cancelled"],
-        },
-      })
-        .then((appliedApplication) => {
-          console.log(appliedApplication);
-          if (
-            appliedApplication !== null &&
-            appliedApplication.status === "applied"
-          ) {
-            res.status(400).json({
-              message: "You have already applied for this job",
-            });
-            return;
-          }
-
-          // Check if the job exists
-          Job.findOne({ _id: jobId })
-            .then((job) => {
-              if (job === null) {
-                res.status(404).json({
-                  message: "Job does not exist",
-                });
-                return;
-              }
-
-              // Count the number active applications for the job
-              Application.countDocuments({
-                jobId: jobId,
-                status: {
-                  $nin: ["rejected", "deleted", "cancelled", "finished"],
-                },
-              })
-                .then((activeApplicationCount) => {
-                  // Check if the maxium number of appilcant for the job
-                  if (activeApplicationCount < job.maxApplicants) {
-                    // Count the number of active applications for the applicant
-                    Application.countDocuments({
-                      userId: user._id,
-                      status: {
-                        $nin: ["rejected", "deleted", "cancelled", "finished"],
-                      },
-                    })
-                      .then((myActiveApplicationCount) => {
-                        // Check if the applicant has not reached the maximum number of active applications
-                        if (myActiveApplicationCount < 10) {
-                          // Count the number of accepted jobs for the applicant
-                          Application.countDocuments({
-                            userId: user._id,
-                            status: "accepted",
-                          }).then((acceptedJobs) => {
-                            // Check if the applicant has no accepted jobs
-                            if (acceptedJobs === 0) {
-                              // Create a new applicant instance
-                              const application = new Application({
-                                userId: user._id,
-                                recruiterId: job.userId,
-                                jobId: job._id,
-                                status: "applied",
-                                sop: data.sop,
-                              });
-
-                              // Save the applicant to the database
-                              application
-                                .save()
-                                .then(() => {
-                                  res.json({
-                                    message: "Job application successful",
-                                  });
-                                })
-                                .catch((err) => {
-                                  res.status(400).json(err);
-                                });
-                            } else {
-                              res.status(400).json({
-                                message:
-                                  "You already have an accepted job. Hence you cannot apply.",
-                              });
-                            }
-                          });
-                        } else {
-                          res.status(400).json({
-                            message:
-                              "You have 10 active applications. Hence you cannot apply.",
-                          });
-                        }
-                      })
-                      .catch((err) => {
-                        res.status(400).json(err);
-                      });
-                  } else {
-                    res.status(400).json({
-                      message: "Application limit reached",
-                    });
-                  }
-                })
-                .catch((err) => {
-                  res.status(400).json(err);
-                });
-            })
-            .catch((err) => {
-              res.status(400).json(err);
-            });
-        })
-        .catch((err) => {
-          res.status(400).json(err);
-        });
-    })
-    .catch((err) => {
-      res.json(400).json(err);
-    });
-};
-
-const checkApply = async (req, res) => {
-  const user = req.user;
-
-  if (user.type !== "applicant") {
-    res.status(400).json({
-      message: "You don't have permissions to check for an accepted job",
-    });
-    return;
-  }
-
   try {
-    const acceptedJob = await Application.findOne({
+    const user = req.user;
+    if (!user || user.type !== "applicant") {
+      return sendError(res, 401, "You don't have permissions to apply");
+    }
+
+    const jobId = req.params.id;
+    const { sop } = req.body;
+
+    /* 1) block if already accepted one job */
+    const hasAccepted = await Application.exists({
       userId: user._id,
-      status: "accepted",
+      status: { $in: ["accepted", "finished"] },
     });
+    if (hasAccepted)
+      return sendError(
+        res,
+        400,
+        "You already have an accepted/finished job, so you cannot apply"
+      );
 
-    if (!acceptedJob) {
-      const finishedJob = await Application.findOne({
-        userId: user._id,
-        status: "finished",
-      });
-
-      if (finishedJob) {
-        res.json({
-          hasAcceptedJob: true,
-        });
-        return;
-      }
-    }
-
-    res.json({
-      hasAcceptedJob: acceptedJob !== null,
+    /* 2) block duplicate applications */
+    const alreadyApplied = await Application.exists({
+      userId: user._id,
+      jobId,
+      status: { $in: ["applied", "shortlisted"] },
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Internal server error",
+    if (alreadyApplied)
+      return sendError(res, 400, "You have already applied for this job");
+
+    /* 3) check job existence & applicant limits */
+    const job = await Job.findById(jobId);
+    if (!job) return sendError(res, 404, "Job does not exist");
+
+    const activeAppCount = await Application.countDocuments({
+      jobId,
+      status: { $nin: ["rejected", "deleted", "cancelled", "finished"] },
     });
-  }
-};
+    if (activeAppCount >= job.maxApplicants)
+      return sendError(res, 400, "Application limit reached for this job");
 
-// recruiter gets applications for a particular job
-const getApplications = async (req, res) => {
-  const user = req.user;
-
-  // Check if the user is a recruiter
-  if (user.type != "recruiter") {
-    res.status(401).json({
-      message: "You don't have permissions to view job applications",
+    /* 4) check applicant's active apps < 10 */
+    const myActive = await Application.countDocuments({
+      userId: user._id,
+      status: { $nin: ["rejected", "deleted", "cancelled", "finished"] },
     });
-    return;
-  }
-  const jobId = req.params.id;
+    if (myActive >= 10)
+      return sendError(res, 400, "You already have 10 active applications");
 
-  // const page = parseInt(req.query.page) ? parseInt(req.query.page) : 1;
-  // const limit = parseInt(req.query.limit) ? parseInt(req.query.limit) : 10;
-  // const skip = page - 1 >= 0 ? (page - 1) * limit : 0;
-
-  // Define filtering parameters based on query parameters
-  let findParams = {
-    jobId: jobId,
-    recruiterId: user._id,
-  };
-
-  let sortParams = {};
-
-  // Filter applications based on status using 'status' query parameter
-  if (req.query.status) {
-    findParams = {
-      ...findParams,
-      status: req.query.status,
-    };
-  }
-
-  // Retrieve applications from the database
-  Application.find(findParams)
-    .collation({ locale: "en" })
-    .sort(sortParams)
-    // .skip(skip)
-    // .limit(limit)
-    .then((applications) => {
-      res.json(applications);
-    })
-    .catch((err) => {
-      res.status(400).json(err);
+    /* 5) create application */
+    const application = new Application({
+      userId: user._id,
+      recruiterId: job.userId,
+      jobId: job._id,
+      status: "applied",
+      sop,
     });
-};
-
-const deleteJob = async (req, res) => {
-  const user = req.user;
-  if (user.type !== "recruiter" && user.type !== "admin") {
-    return res.status(401).json({
-      message: "You don't have permissions to delete the job",
-    });
-  }
-
-  try {
-    const job = await Job.findOneAndDelete({
-      _id: req.params.id,
-    });
-    if (!job) {
-      return res.status(404).json({
-        message: "Job not found",
-      });
-    }
-    res.json({
-      message: "Job deleted successfully",
-    });
+    await application.save();
+    return res.json({ message: "Job application successful" });
   } catch (err) {
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    console.error("applyJob error →", err);
+    return sendError(res, 400, err.message || "Failed to apply");
   }
 };
 
+/* ─────────────────────────────────────────────
+   ─────────────  CHECK ACCEPTED  ──────────────
+   ───────────────────────────────────────────── */
+const checkApply = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || user.type !== "applicant") {
+      return sendError(res, 400, "You don't have permissions");
+    }
+
+    const acceptedJob = await Application.exists({
+      userId: user._id,
+      status: { $in: ["accepted", "finished"] },
+    });
+
+    return res.json({ hasAcceptedJob: !!acceptedJob });
+  } catch (err) {
+    console.error("checkApply error →", err);
+    return sendError(res, 500, "Internal server error");
+  }
+};
+
+/* ─────────────────────────────────────────────
+   ─────────────  GET APPLICATIONS  ────────────
+   ───────────────────────────────────────────── */
+const getApplications = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || user.type !== "recruiter") {
+      return sendError(res, 401, "You don't have permissions");
+    }
+
+    const findParams = {
+      jobId: req.params.id,
+      recruiterId: user._id,
+    };
+    if (req.query.status) findParams.status = req.query.status;
+
+    const applications = await Application.find(findParams).sort({});
+    return res.json(applications);
+  } catch (err) {
+    console.error("getApplications error →", err);
+    return sendError(res, 400, err.message || "Failed to fetch applications");
+  }
+};
+
+/* ─────────────────────────────────────────────
+   ─────────────  DELETE JOB  ──────────────────
+   ───────────────────────────────────────────── */
+const deleteJob = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user || (user.type !== "recruiter" && user.type !== "admin")) {
+      return sendError(res, 401, "You don't have permissions");
+    }
+
+    const deleted = await Job.findOneAndDelete({ _id: req.params.id });
+    if (!deleted) return sendError(res, 404, "Job not found");
+
+    return res.json({ message: "Job deleted successfully" });
+  } catch (err) {
+    console.error("deleteJob error →", err);
+    return sendError(res, 500, "Internal server error");
+  }
+};
+
+/* ─────────────────────────────────────────────
+               EXPORTS
+───────────────────────────────────────────── */
 module.exports = {
   addJob,
   getJobList,
