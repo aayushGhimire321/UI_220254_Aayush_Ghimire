@@ -11,14 +11,15 @@ const sendMail = async ({ email, html, subject }) => {
       pass: process.env.MY_PASSWORD,
     },
   });
+
   const info = await transporter.sendMail({
-    from: '"JobPortal" <no-replay@jobportal.com>',
+    from: `"JobPortal" <${process.env.MY_EMAIL}>`,
     to: email,
     subject: subject,
     html: html,
   });
+
   return info;
 };
-
 
 module.exports = sendMail;
