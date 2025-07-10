@@ -25,12 +25,12 @@ export default function Footer() {
 
             <a
               className="w-[220px] text-lg font-medium border-b-2 border-black hover:opacity-60"
-              href="mailto:nhatkha06299@gmail.com"
+              href="mailto:aghimire781@gmail.com"
             >
-              nhatkha06299@gmail.com
+              aghimire781@gmail.com
             </a>
             <span className="font-light">
-              Copyright © 2023 <span className="font-normal"> Nhat kha</span>{" "}
+              Copyright © 2025 <span className="font-normal"> Aayush</span>{" "}
               Design.
             </span>
           </div>
@@ -133,7 +133,7 @@ export default function Footer() {
             <h1 className="text-2xl font-semibold">Follow us</h1>
             <a
               className="w-28 font-semibold text-lg"
-              href="https://www.instagram.com/kha_martin/"
+              href="https://www.instagram.com/aayush4599/"
               target="_blank"
               rel="noreferrer"
             >
@@ -141,7 +141,7 @@ export default function Footer() {
             </a>
             <a
               className="w-28 opacity-80 hover:opacity-100 font-semibold text-lg"
-              href="https://github.com/Nhat-Kha"
+              href="https://www.linkedin.com/in/aayush-ghimire-29754a352/"
               target="_blank"
               rel="noreferrer"
             >
