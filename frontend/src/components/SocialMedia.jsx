@@ -6,7 +6,7 @@ import five from "assets/images/6.png";
 
 export default function SocialMedia() {
   return (
-    <div className="bg-lightYellow py-20">
+    <div className="bg-white py-20">
       <h1 className="md:text-6xl text-4xl font-bold text-gray-900 text-center pb-3">
         Follow us
       </h1>
@@ -14,7 +14,7 @@ export default function SocialMedia() {
         Follow us on{" "}
         <a
           className="font-bold border-black hover:text-secondary"
-          href="https://www.instagram.com/kha_martin/"
+          href="https://www.instagram.com/aayush4599/"
           target="_blank"
           rel="noreferrer"
         >
@@ -23,7 +23,7 @@ export default function SocialMedia() {
         and{" "}
         <a
           className="font-bold  border-black hover:text-secondary"
-          href="https://www.facebook.com/profile.php?id=100011056752898"
+          href="https://www.facebook.com/aayush.ghimire.18/"
           target="_blank"
           rel="noreferrer"
         >
@@ -34,7 +34,7 @@ export default function SocialMedia() {
       <div className="w-10/12 mx-auto grid md:grid-cols-5 grid-cols-2 gap-5 ">
         <a
           className="transform ease-in duration-100 hover:-translate-y-2 "
-          href="https://www.facebook.com/profile.php?id=100011056752898"
+          href="https://www.facebook.com/aayush.ghimire.18/"
           target="_blank"
           rel="noreferrer"
         >
@@ -47,7 +47,7 @@ export default function SocialMedia() {
 
         <a
           className="md:block hidden transform ease-in duration-100 hover:-translate-y-2"
-          href="https://www.instagram.com/kha_martin/"
+          href="https://www.instagram.com/aayush4599/"
           target="_blank"
           rel="noreferrer"
         >
@@ -60,7 +60,7 @@ export default function SocialMedia() {
 
         <a
           className="transform ease-in duration-100 hover:-translate-y-2"
-          href="https://www.instagram.com/kha_martin/"
+          href="https://www.instagram.com/aayush4599/"
           target="_blank"
           rel="noreferrer"
         >
@@ -72,7 +72,7 @@ export default function SocialMedia() {
         </a>
         <a
           className="transform ease-in duration-100 hover:-translate-y-2"
-          href="https://www.instagram.com/kha_martin/"
+          href="https://www.instagram.com/aayush4599/"
           target="_blank"
           rel="noreferrer"
         >
@@ -85,7 +85,7 @@ export default function SocialMedia() {
 
         <a
           className="transform ease-in duration-100 hover:-translate-y-2 "
-          href="https://www.instagram.com/kha_martin/"
+          href="https://www.instagram.com/aayush4599/"
           target="_blank"
           rel="noreferrer"
         >
