@@ -255,10 +255,10 @@ const forgotPassword = async (req, res) => {
   await user.save();
   const html = `
     <p style="font-family: Arial, Helvetica, sans-serif; font-weight: 500; font-size: 14px">
-      You received this email because you or someone else requested a password reset
+      Bạn nhận được email này vì bạn hoặc ai đó đã yêu cầu lấy lại mật khẩu
     </p>
     <p style="font-family: Arial, Helvetica, sans-serif; font-weight: 500; font-size: 14px">
-      Click here to reset your password, this request will expire after 15 minutes:
+      Chọn vào đây để lấy lại mật khẩu, yêu cầu này sẽ mất hiệu lực sau 15 phút:
     </p>
     <button style="padding: 14px; background-color: #1E90FF; border-radius: 5px; border-style: none; cursor: pointer">
       <a href=${process.env.CLIENT_URL}/password/reset/${resetToken}
